@@ -35,7 +35,7 @@ class Shape:
         return self._get_point_sum() / [self._get_point_count(), self._get_point_count()]
 
     def _get_point_min(self) -> List[float]:
-        return self._points_matrix.min(axis=0)
+        return self._points_matrix.min(axis=0, initial=None)
 
     def _move_to_quadrant_one(self):
         minimums = self._get_point_min()
