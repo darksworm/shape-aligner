@@ -1,2 +1,2 @@
 numpy==1.18.5
-parametrized==0.7.0
+parametrized==0.1
