@@ -7,6 +7,10 @@ import numpy
 class Shape:
     def __init__(self, points: List[List[int]]):
         self._points_matrix = numpy.array(points)
+        self._move_to_quadrant_one()
+
+    def get_points(self) -> numpy.ndarray:
+        return self._points_matrix
 
     def rotate(self, degrees: int):
         if self._rotation_result_same_as_current_state(degrees):
@@ -15,8 +19,11 @@ class Shape:
         self._points_matrix = self._get_rotated_points(degrees)
         self._move_to_quadrant_one()
 
-    def get_points(self) -> numpy.ndarray:
-        return self._points_matrix
+    def flip(self):
+        self.rotate(-90)
+        self._points_matrix = numpy.flip(self._points_matrix)
+        self._points_matrix = self._points_matrix - self._get_centroid_point()
+        self._move_to_quadrant_one()
 
     def _get_point_count(self) -> int:
         return len(self._points_matrix)
