@@ -12,14 +12,14 @@ class Shape:
     def get_points(self) -> numpy.ndarray:
         return self._points_matrix
 
-    def rotate(self, degrees: int):
+    def rotate(self, degrees: int) -> None:
         if self._rotation_result_same_as_current_state(degrees):
             return
 
         self._points_matrix = self._get_rotated_points(degrees)
         self._move_to_quadrant_one()
 
-    def flip(self):
+    def flip(self) -> None:
         self.rotate(-90)
         self._points_matrix = numpy.flip(self._points_matrix)
         self._points_matrix = self._points_matrix - self._get_centroid_point()
@@ -37,7 +37,7 @@ class Shape:
     def _get_point_min(self) -> List[float]:
         return self._points_matrix.min(axis=0, initial=None)
 
-    def _move_to_quadrant_one(self):
+    def _move_to_quadrant_one(self) -> None:
         minimums = self._get_point_min()
 
         point_adjustment = [
@@ -69,5 +69,5 @@ class Shape:
         return self._apply_rotation(centroid_matrix, rotation_matrix)
 
     @staticmethod
-    def _rotation_result_same_as_current_state(degrees):
+    def _rotation_result_same_as_current_state(degrees) -> bool:
         return degrees % 360 == 0
