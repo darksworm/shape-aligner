@@ -1,2 +1,3 @@
+pyclipper
 parameterized==0.7.0
 numpy==1.18.5
