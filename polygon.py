@@ -9,7 +9,6 @@ PolygonPointsList = List[List[int]]
 class Polygon:
     def __init__(self, points: PolygonPointsList):
         self._points_matrix = numpy.array(points)
-        self._move_to_quadrant_one()
 
     def get_points(self) -> numpy.ndarray:
         return self._points_matrix
@@ -93,6 +92,12 @@ class PolygonPiece:
 
     def get_points_in_plane(self) -> numpy.ndarray:
         return self._polygon.get_points() + self._position
+
+    def move(self, x: int, y: int):
+        self._position = [
+            self._position[0] + x,
+            self._position[1] + y,
+        ]
 
 
 class Board(PolygonPiece):

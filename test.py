@@ -5,6 +5,8 @@ from parameterized import parameterized
 
 from polygon import Polygon, Board, PolygonPiece
 
+HUNDRED_THOUSAND = 100000
+
 
 class TestPolygon(unittest.TestCase):
     def setUp(self) -> None:
@@ -49,7 +51,7 @@ class TestPolygonRotations(unittest.TestCase):
         self.assertEqual(self.vertical_rectangle_points, rotated)
 
     @parameterized.expand([
-        [randrange(-192834, 135783)] for _ in range(1, 300)
+        [randrange(-HUNDRED_THOUSAND, HUNDRED_THOUSAND)] for _ in range(1, 300)
     ])
     def test_polygon_rotate_doesnt_result_in_negative_coords(self, rotation):
         polygon = Polygon(self.vertical_rectangle_points.copy())
@@ -71,7 +73,7 @@ class TestPolygonRotations(unittest.TestCase):
             self.assertIn(point, rotated)
 
     @parameterized.expand([
-        [randrange(-192834, 135783)] for _ in range(1, 300)
+        [randrange(-HUNDRED_THOUSAND, HUNDRED_THOUSAND)] for _ in range(1, 300)
     ])
     def test_rotate_and_rotate_back_returns_to_starting_points(self, rotation):
         polygon = Polygon(self.square_points.copy())
@@ -176,7 +178,7 @@ class TestPolygonPiece(unittest.TestCase):
         self.assertEqual(polygon.get_points().tolist(), piece.get_points_in_plane().tolist())
 
     @parameterized.expand([
-        [randrange(-192834, 135783), randrange(-192834, 135783)] for _ in range(300)
+        [randrange(-HUNDRED_THOUSAND, HUNDRED_THOUSAND), randrange(-HUNDRED_THOUSAND, HUNDRED_THOUSAND)] for _ in range(300)
     ])
     def test_points_not_same_as_poly_if_position_not_zero(self, *position):
         position = list(position)
@@ -185,7 +187,7 @@ class TestPolygonPiece(unittest.TestCase):
         self.assertNotEqual(polygon.get_points().tolist(), piece.get_points_in_plane().tolist())
 
     @parameterized.expand([
-        [randrange(1, 135783), randrange(1, 135783)] for _ in range(300)
+        [randrange(1, HUNDRED_THOUSAND), randrange(1, HUNDRED_THOUSAND)] for _ in range(300)
     ])
     def test_points_dont_decrease_with_positive_position(self, *position):
         position = list(position)
@@ -194,13 +196,37 @@ class TestPolygonPiece(unittest.TestCase):
         self.assertGreaterEqual(piece.get_points_in_plane().sum(), polygon.get_points().sum())
 
     @parameterized.expand([
-        [randrange(-123123, -1), randrange(-123123, -1)] for _ in range(300)
+        [randrange(-HUNDRED_THOUSAND, -1), randrange(-HUNDRED_THOUSAND, -1)] for _ in range(300)
     ])
     def test_points_dont_increase_with_positive_position(self, *position):
         position = list(position)
         polygon = Polygon([[0, 0], [0, 10], [10, 0], [10, 10]])
         piece = PolygonPiece(polygon, position)
         self.assertLessEqual(piece.get_points_in_plane().sum(), polygon.get_points().sum())
+
+    @parameterized.expand([
+        [randrange(0, HUNDRED_THOUSAND), randrange(0, HUNDRED_THOUSAND)] for _ in range(300)
+    ])
+    def test_move_nonnegative_amount_doesnt_decrease_position(self, x, y):
+        starting_position = [125, 123]
+        piece = PolygonPiece(Polygon([[0, 0], [3, 3], [0, 3]]), starting_position.copy())
+        piece.move(x, y)
+        self.assertGreaterEqual(piece.get_position(), starting_position)
+
+    @parameterized.expand([
+        [randrange(-HUNDRED_THOUSAND, -1), randrange(-HUNDRED_THOUSAND, -1)] for _ in range(300)
+    ])
+    def test_move_negative_amount_doesnt_increase_position(self, x, y):
+        starting_position = [125, 123]
+        piece = PolygonPiece(Polygon([[0, 0], [3, 3], [0, 3]]), starting_position.copy())
+        piece.move(x, y)
+        self.assertLessEqual(piece.get_position(), starting_position)
+
+    def test_move_zeroes_doesnt_change_position(self):
+        starting_position = [125, 123]
+        piece = PolygonPiece(Polygon([[0, 0], [3, 3], [0, 3]]), starting_position.copy())
+        piece.move(0, 0)
+        self.assertEqual(starting_position, piece.get_position())
 
 
 class TestPolygonArea(unittest.TestCase):
