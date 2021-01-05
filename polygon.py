@@ -100,19 +100,61 @@ class PolygonPiece:
         ]
 
 
-class Board(PolygonPiece):
-    def intersection_area(self, piece: PolygonPiece) -> float:
-        polygons_points = self._get_intersection_polygons_points(piece)
-        polygons = [Polygon(points) for points in polygons_points]
-        polygon_areas = [polygon.area() for polygon in polygons]
-        return sum(polygon_areas)
+class PolygonIntersector:
+    def intersection_area(self, subject: iter, clip: iter) -> float:
+        polygons = self.intersection_polygons(subject, clip)
+        return sum([polygon.area() for polygon in polygons])
 
-    def _get_intersection_polygons_points(self, clip: PolygonPiece) -> List[PolygonPointsList]:
+    def intersection_polygons(self, subject: iter, clip: iter) -> List[Polygon]:
+        polygons_points = self._get_intersections(subject, clip)
+        return [Polygon(points) for points in polygons_points]
+
+    @staticmethod
+    def _get_intersections(subject: iter, clip: iter) -> List[PolygonPointsList]:
         # don't import this globally to avoid use of it outside of this method
         import pyclipper
 
         clipper = pyclipper.Pyclipper()
-        clipper.AddPath(self.get_points_in_plane(), pyclipper.PT_SUBJECT, True)
-        clipper.AddPath(clip.get_points_in_plane(), pyclipper.PT_CLIP, True)
+        clipper.AddPath(subject, pyclipper.PT_SUBJECT, True)
+        clipper.AddPath(clip, pyclipper.PT_CLIP, True)
 
         return clipper.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
+
+
+class Board(PolygonPiece):
+    pass
+
+
+class Level:
+    def __init__(self, board: Board, pieces: List[PolygonPiece]):
+        self._board = board
+        self._pieces = pieces
+
+    def get_completion_percentage(self):
+        covered_area = 0
+        board_area = self._board.get_polygon().area()
+        intersector = PolygonIntersector()
+
+        for piece_index, piece in enumerate(self._pieces):
+            board_intersecting_polygons = [
+                PolygonPiece(polygon, piece.get_position()) for polygon in
+                intersector.intersection_polygons(
+                    self._board.get_points_in_plane(),
+                    piece.get_points_in_plane()
+                )
+            ]
+
+            for intersection in board_intersecting_polygons:
+                covered_area += intersection.get_polygon().area()
+                for other_piece_index, other_piece in enumerate(self._pieces):
+                    if piece_index <= other_piece_index:
+                        continue
+
+                    other_intersections = intersector.intersection_polygons(
+                        intersection.get_points_in_plane(),
+                        other_piece.get_points_in_plane()
+                    )
+                    for other_intersection in other_intersections:
+                        covered_area -= other_intersection.area()
+
+        return covered_area / board_area * 100 if covered_area > 0 else 0
