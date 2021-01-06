@@ -408,6 +408,6 @@ class TestLevel(unittest.TestCase):
         if len(intersector.intersection_polygons(piece.get_points_in_plane(), piece1.get_points_in_plane())) == 0:
             self.assertGreaterEqual(coverage_with_two_pieces, coverage_with_one_piece)
         else:
-            coverage_about_the_same = round(coverage_with_two_pieces) == round(coverage_with_one_piece)
+            coverage_almost_equal = abs(coverage_with_two_pieces - coverage_with_one_piece) <= 1
             two_piece_coverage_greater_equal = coverage_with_two_pieces >= coverage_with_one_piece
-            self.assertTrue(two_piece_coverage_greater_equal or coverage_about_the_same)
+            self.assertTrue(two_piece_coverage_greater_equal or coverage_almost_equal)
