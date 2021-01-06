@@ -10,7 +10,7 @@ from parameterized import parameterized
 from polygon import Polygon, Board, PolygonPiece, Level, PolygonIntersector
 
 HUNDRED_THOUSAND = 100000
-TEST_CHUNK_SIZE = 1000
+TEST_CHUNK_SIZE = 100
 
 
 class PolygonGenerator:
@@ -369,42 +369,42 @@ class TestLevel(unittest.TestCase):
     def test_board_coverage_with_piece_same_size_as_board_is_100_percent(self):
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
         piece = PolygonPiece(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
-        level = Level(board, [piece])
+        level = Level(board, [piece], PolygonIntersector())
         self.assertEqual(100, level.get_completion_percentage())
 
     @parameterized.expand(random_polygon_points(TEST_CHUNK_SIZE))
     def test_board_coverage_not_negative(self, *points):
         piece = PolygonPiece(Polygon(list(points)), random_position())
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
-        level = Level(board, [piece])
+        level = Level(board, [piece], PolygonIntersector())
         actual_coverage = level.get_completion_percentage()
         self.assertGreaterEqual(0, actual_coverage)
 
     def test_board_with_no_pieces_has_zero_coverate(self):
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
-        level = Level(board, [])
+        level = Level(board, [], PolygonIntersector())
         self.assertEqual(0, level.get_completion_percentage())
 
     @parameterized.expand(random_polygon_points(TEST_CHUNK_SIZE))
     def test_two_fully_overlapping_pieces_serve_same_board_coverage(self, *points):
         piece = PolygonPiece(Polygon(list(points)), [0, 0])
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
-        level = Level(board, [piece])
+        level = Level(board, [piece], PolygonIntersector())
         coverage_with_one_piece = level.get_completion_percentage()
-        level = Level(board, [piece, piece])
+        level = Level(board, [piece, piece], PolygonIntersector())
         coverage_with_two_pieces = level.get_completion_percentage()
-        self.assertAlmostEqual(coverage_with_one_piece, coverage_with_two_pieces, delta=0.5)
+        self.assertAlmostEqual(coverage_with_one_piece, coverage_with_two_pieces, delta=1)
 
     @parameterized.expand(random_polygon_points(TEST_CHUNK_SIZE))
     def test_adding_a_piece_does_not_decrease_coverage(self, *points):
         piece = PolygonPiece(Polygon(list(points)), [0, 0])
         piece1 = PolygonPiece(Polygon(random_polygon_points(1)[0]), [0, 0])
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
-        level = Level(board, [piece])
-        coverage_with_one_piece = level.get_completion_percentage()
-        level = Level(board, [piece, piece1])
-        coverage_with_two_pieces = level.get_completion_percentage()
         intersector = PolygonIntersector()
+        level = Level(board, [piece], intersector)
+        coverage_with_one_piece = level.get_completion_percentage()
+        level = Level(board, [piece, piece1], intersector)
+        coverage_with_two_pieces = level.get_completion_percentage()
         if len(intersector.intersection_polygons(piece.get_points_in_plane(), piece1.get_points_in_plane())) == 0:
             self.assertGreaterEqual(coverage_with_two_pieces, coverage_with_one_piece)
         else:

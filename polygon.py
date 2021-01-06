@@ -134,35 +134,58 @@ class Board(PolygonPiece):
 
 
 class Level:
-    def __init__(self, board: Board, pieces: List[PolygonPiece]):
+    def __init__(self, board: Board, pieces: List[PolygonPiece], intersector: PolygonIntersector):
         self._board = board
         self._pieces = pieces
+        self._intersector = intersector
+
+    def _get_pieces_skipping_these_indexes(self, skip_indexes: List[int]):
+        pieces = []
+        for piece_index, piece in enumerate(self._pieces):
+            for skip_index in skip_indexes:
+                if skip_index != piece_index:
+                    pieces.append(piece)
+        return pieces
+
+    @staticmethod
+    def _sum_piece_areas(pieces: List[PolygonPiece]):
+        return sum([p.get_polygon().area() for p in pieces])
+
+    def _get_intersections_one_to_one(self, subject: PolygonPiece, clip: PolygonPiece):
+        intersections = self._intersector.intersection_polygons(
+            subject.get_points_in_plane(),
+            clip.get_points_in_plane()
+        )
+        return [PolygonPiece(i, [0, 0]) for i in intersections]
+
+    def _get_intersections_one_to_many(self, subject: PolygonPiece, clips: List[PolygonPiece]):
+        intersections = []
+        for clip in clips:
+            intersections += self._get_intersections_one_to_one(subject, clip)
+
+        return intersections
+
+    def _get_intersections_many_to_many(self, subjects: List[PolygonPiece], clips: List[PolygonPiece]):
+        intersections = []
+        for subject in subjects:
+            intersections += self._get_intersections_one_to_many(subject, clips)
+
+        return intersections
 
     def get_completion_percentage(self):
         covered_area = 0
-        board_area = self._board.get_polygon().area()
-        intersector = PolygonIntersector()
+        checked_piece_indexes = []
 
         for piece_index, piece in enumerate(self._pieces):
-            board_intersecting_polygons = [
-                PolygonPiece(polygon, piece.get_position()) for polygon in
-                intersector.intersection_polygons(
-                    self._board.get_points_in_plane(),
-                    piece.get_points_in_plane()
-                )
-            ]
+            board_intersections = self._get_intersections_one_to_one(self._board, piece)
 
-            for intersection in board_intersecting_polygons:
-                covered_area += intersection.get_polygon().area()
-                for other_piece_index, other_piece in enumerate(self._pieces):
-                    if piece_index <= other_piece_index:
-                        continue
+            covered_area += self._sum_piece_areas(board_intersections)
+            other_pieces = self._get_pieces_skipping_these_indexes(checked_piece_indexes)
 
-                    other_intersections = intersector.intersection_polygons(
-                        intersection.get_points_in_plane(),
-                        other_piece.get_points_in_plane()
-                    )
-                    for other_intersection in other_intersections:
-                        covered_area -= other_intersection.area()
+            other_piece_intersections = self._get_intersections_many_to_many(board_intersections, other_pieces)
+            covered_area -= self._sum_piece_areas(other_piece_intersections)
 
+            checked_piece_indexes.append(piece_index)
+
+        board_area = self._board.get_polygon().area()
         return covered_area / board_area * 100 if covered_area > 0 else 0
