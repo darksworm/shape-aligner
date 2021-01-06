@@ -115,8 +115,16 @@ class PolygonIntersector:
         import pyclipper
 
         clipper = pyclipper.Pyclipper()
-        clipper.AddPath(subject, pyclipper.PT_SUBJECT, True)
-        clipper.AddPath(clip, pyclipper.PT_CLIP, True)
+
+        try:
+            clipper.AddPath(subject, pyclipper.PT_SUBJECT, True)
+        except pyclipper.ClipperException:
+            return []
+
+        try:
+            clipper.AddPath(clip, pyclipper.PT_CLIP, True)
+        except pyclipper.ClipperException:
+            return []
 
         return clipper.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
 
