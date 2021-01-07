@@ -142,9 +142,8 @@ class Level:
     def _get_pieces_skipping_these_indexes(self, skip_indexes: List[int]):
         pieces = []
         for piece_index, piece in enumerate(self._pieces):
-            for skip_index in skip_indexes:
-                if skip_index != piece_index:
-                    pieces.append(piece)
+            if piece_index not in skip_indexes:
+                pieces.append(piece)
         return pieces
 
     @staticmethod
@@ -178,14 +177,13 @@ class Level:
 
         for piece_index, piece in enumerate(self._pieces):
             board_intersections = self._get_intersections_one_to_one(self._board, piece)
+            checked_piece_indexes.append(piece_index)
 
             covered_area += self._sum_piece_areas(board_intersections)
             other_pieces = self._get_pieces_skipping_these_indexes(checked_piece_indexes)
 
             other_piece_intersections = self._get_intersections_many_to_many(board_intersections, other_pieces)
             covered_area -= self._sum_piece_areas(other_piece_intersections)
-
-            checked_piece_indexes.append(piece_index)
 
         board_area = self._board.get_polygon().area()
         return covered_area / board_area * 100 if covered_area > 0 else 0
