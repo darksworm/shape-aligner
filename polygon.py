@@ -3,7 +3,7 @@ from typing import List
 
 import numpy
 
-PolygonPointsList = List[List[int]]
+PolygonPointsList = List[List[float]]
 
 
 class Polygon:
@@ -13,18 +13,18 @@ class Polygon:
     def get_points(self) -> numpy.ndarray:
         return self._points_matrix
 
-    def rotate(self, degrees: int) -> None:
+    def rotate(self, degrees: float) -> None:
         if self._rotation_result_same_as_current_state(degrees):
             return
 
         self._points_matrix = self._get_rotated_points(degrees)
-        self._move_to_quadrant_one()
+        self.move_to_quadrant_one()
 
     def flip(self) -> None:
         self.rotate(-90)
         self._points_matrix = numpy.flip(self._points_matrix)
-        self._points_matrix = self._points_matrix - self._get_centroid_point()
-        self._move_to_quadrant_one()
+        self._points_matrix = self._points_matrix - self.get_centroid_point()
+        self.move_to_quadrant_one()
 
     def _get_point_count(self) -> int:
         return len(self._points_matrix)
@@ -32,13 +32,13 @@ class Polygon:
     def _get_point_sum(self) -> numpy.ndarray:
         return self._points_matrix.sum(axis=0)
 
-    def _get_centroid_point(self) -> numpy.ndarray:
+    def get_centroid_point(self) -> numpy.ndarray:
         return self._get_point_sum() / [self._get_point_count(), self._get_point_count()]
 
     def _get_point_min(self) -> List[float]:
         return self._points_matrix.min(axis=0, initial=None).tolist()
 
-    def _move_to_quadrant_one(self) -> None:
+    def move_to_quadrant_one(self) -> None:
         minimums = self._get_point_min()
 
         point_adjustment = [
@@ -49,7 +49,7 @@ class Polygon:
         self._points_matrix = self._points_matrix + point_adjustment
 
     @staticmethod
-    def _get_clockwise_rotation_matrix_for_degrees(degrees: int) -> numpy.ndarray:
+    def _get_clockwise_rotation_matrix_for_degrees(degrees: float) -> numpy.ndarray:
         theta = math.radians(degrees)
         cos_angle = math.cos(theta)
         sin_angle = math.sin(theta)
@@ -64,8 +64,8 @@ class Polygon:
         rotation_applied = centroid_subtracted.dot(rotation_matrix)
         return rotation_applied + centroid_matrix
 
-    def _get_rotated_points(self, degrees: int) -> numpy.ndarray:
-        centroid_matrix = numpy.array(self._get_centroid_point())
+    def _get_rotated_points(self, degrees: float) -> numpy.ndarray:
+        centroid_matrix = numpy.array(self.get_centroid_point())
         rotation_matrix = self._get_clockwise_rotation_matrix_for_degrees(degrees)
         return self._apply_rotation(centroid_matrix, rotation_matrix)
 
@@ -98,6 +98,12 @@ class PolygonPiece:
             self._position[0] + x,
             self._position[1] + y,
         ]
+
+    def get_center_distance_from(self, x, y):
+        centroid_position = self._polygon.get_centroid_point()
+        centroid_in_plane = numpy.array(self.get_position()) + centroid_position
+        distance = numpy.subtract([x, y], centroid_in_plane)
+        return numpy.abs(distance)
 
 
 class PolygonIntersector:
@@ -187,3 +193,9 @@ class Level:
 
         board_area = self._board.get_polygon().area()
         return covered_area / board_area * 100 if covered_area > 0 else 0
+
+    def get_board(self) -> Board:
+        return self._board
+
+    def get_pieces(self):
+        return self._pieces

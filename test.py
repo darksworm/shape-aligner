@@ -314,6 +314,49 @@ class TestPolygonPiece(unittest.TestCase):
         piece.move(0, 0)
         self.assertEqual(starting_position, piece.get_position())
 
+    def test_get_center_distance_from_returns_array_with_two_numbers(self):
+        piece = PolygonPiece(Polygon([[0, 0], [3, 3], [0, 3]]), [125, 30])
+        distance = piece.get_center_distance_from(250, 300)
+        self.assertEqual(2, len(distance))
+
+    def test_get_center_distance_from_returns_0_if_centroid_in_same_point(self):
+        polygon = Polygon([[0, 0], [3, 3], [0, 3]])
+        polygon.get_centroid_point = lambda: [1337, 1337]
+
+        piece = PolygonPiece(polygon, [0, 0])
+        distance = piece.get_center_distance_from(1337, 1337)
+
+        self.assertEqual(0, distance[0])
+        self.assertEqual(0, distance[1])
+
+    def test_get_center_distance_from_doesnt_return_0_if_centroid_in_different_point(self):
+        polygon = Polygon([[0, 0], [3, 3], [0, 3]])
+        polygon.get_centroid_point = lambda: [51, 33]
+
+        piece = PolygonPiece(polygon, [0, 0])
+        distance = piece.get_center_distance_from(1337, 1337)
+
+        self.assertNotEqual(0, distance[0])
+        self.assertNotEqual(0, distance[1])
+
+    def test_get_center_distance_from_is_affected_by_polygon_piece_position(self):
+        polygon = Polygon([[0, 0], [3, 3], [0, 3]])
+
+        piece1 = PolygonPiece(polygon, [0, 0])
+        piece2 = PolygonPiece(polygon, [15, 66])
+
+        p1pts = piece1.get_center_distance_from(0, 0)
+        p2pts = piece2.get_center_distance_from(0, 0)
+
+        self.assertFalse(all(a == b for a, b in zip(p1pts, p2pts)))
+
+    def test_get_distance_from_returns_positive_vals(self):
+        polygon = Polygon([[0, 0], [3, 3], [0, 3]])
+        piece1 = PolygonPiece(polygon, [1233, 12312])
+        self.assertTrue(all(a > 0 for a in piece1.get_center_distance_from(0, 0)))
+        piece2 = PolygonPiece(polygon, [-1233, -12312])
+        self.assertTrue(all(a > 0 for a in piece2.get_center_distance_from(0, 0)))
+
 
 class TestPolygonArea(unittest.TestCase):
     def test_square_area_correct(self):
@@ -380,7 +423,7 @@ class TestLevel(unittest.TestCase):
         actual_coverage = level.get_completion_percentage()
         self.assertGreaterEqual(0, actual_coverage)
 
-    def test_board_with_no_pieces_has_zero_coverate(self):
+    def test_board_with_no_pieces_has_zero_coverage(self):
         board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
         level = Level(board, [], PolygonIntersector())
         self.assertEqual(0, level.get_completion_percentage())
@@ -411,3 +454,20 @@ class TestLevel(unittest.TestCase):
             coverage_almost_equal = abs(coverage_with_two_pieces - coverage_with_one_piece) <= 1
             two_piece_coverage_greater_equal = coverage_with_two_pieces >= coverage_with_one_piece
             self.assertTrue(two_piece_coverage_greater_equal or coverage_almost_equal)
+
+    def test_get_board_returns_board(self):
+        board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
+        intersector = PolygonIntersector()
+        level = Level(board, [], intersector)
+        self.assertEqual(board, level.get_board())
+
+    def test_get_pieces_returns_pieces(self):
+        board = Board(Polygon([[0, 0], [100, 100], [100, 0]]), [0, 0])
+        pieces = [
+            PolygonPiece(Polygon(random_polygon_points(1)[0]), [0, 0]),
+            PolygonPiece(Polygon(random_polygon_points(1)[0]), [0, 0]),
+            PolygonPiece(Polygon(random_polygon_points(1)[0]), [0, 0])
+        ]
+        intersector = PolygonIntersector()
+        level = Level(board, pieces, intersector)
+        self.assertEqual(pieces, level.get_pieces())
