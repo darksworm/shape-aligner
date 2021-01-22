@@ -93,6 +93,11 @@ class PolygonPiece:
     def get_points_in_plane(self) -> numpy.ndarray:
         return self._polygon.get_points() + self._position
 
+    def get_center_in_plane(self) -> List:
+        centroid_position = self._polygon.get_centroid_point()
+        centroid_in_plane = numpy.array(self.get_position()) + centroid_position
+        return centroid_in_plane
+
     def move(self, x: int, y: int):
         self._position = [
             self._position[0] + x,
@@ -100,8 +105,7 @@ class PolygonPiece:
         ]
 
     def get_center_distance_from(self, x, y):
-        centroid_position = self._polygon.get_centroid_point()
-        centroid_in_plane = numpy.array(self.get_position()) + centroid_position
+        centroid_in_plane = self.get_center_in_plane()
         distance = numpy.subtract([x, y], centroid_in_plane)
         return numpy.abs(distance)
 
@@ -188,6 +192,7 @@ class Level:
             covered_area += self._sum_piece_areas(board_intersections)
             other_pieces = self._get_pieces_skipping_these_indexes(checked_piece_indexes)
 
+            # this will break in cases where multiple polygons share an intersection
             other_piece_intersections = self._get_intersections_many_to_many(board_intersections, other_pieces)
             covered_area -= self._sum_piece_areas(other_piece_intersections)
 
