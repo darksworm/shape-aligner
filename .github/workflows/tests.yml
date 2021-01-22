@@ -40,4 +40,4 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
           COVERALLS_PARALLEL: false
         run: |
-          coveralls
+          coveralls --service=github
